@@ -1,0 +1,22 @@
+[cerebrium.deployment]
+name = "ml-training-worker"
+python_version = "3.11"
+docker_base_image_url = "debian:bookworm-slim"
+disable_auth = true
+include = ['./*', 'main.py', 'cerebrium.toml']
+exclude = ['.*', '__pycache__']
+
+[cerebrium.hardware]
+cpu = 4.0
+memory = 16.0
+gpu = "T4"
+gpu_count = 1
+region = "us-east-1"
+
+[cerebrium.scaling]
+min_replicas = 1
+max_replicas = 1
+cooldown = 300
+replica_concurrency = 1
+
+[cerebrium.dependencies.pip]
